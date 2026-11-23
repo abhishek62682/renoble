@@ -1,0 +1,25 @@
+{
+  "name": "renoble-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --env-file=./.env.development index.js",
+    "start": "node index.js",
+    "start:prod": "node --env-file=./.env.production index.js",
+    "seed": "node --env-file=./.env.development src/scripts/seed-users.js",
+    "seed:prod": "node --env-file=./.env.production src/scripts/seed-users.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "http-errors": "^2.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
