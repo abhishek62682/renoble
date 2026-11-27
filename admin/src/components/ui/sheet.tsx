@@ -71,6 +71,7 @@ function SheetContent({
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
           className
         )}
+        onInteractOutside={(e) => e.preventDefault()}
         {...props}
       >
         {children}

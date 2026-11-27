@@ -36,6 +36,8 @@ export const createPayment = async (req, res) => {
   const isSub = project.pricingType === "subscription";
   if (isSub && req.body.type !== "subscription")
     throw createHttpError(422, "Subscription projects only take subscription payments.");
+  if (isSub && project.subscription?.stoppedAt)
+    throw createHttpError(409, "This subscription is stopped. Resume it to request a new payment.");
   if (!isSub && req.body.type === "subscription")
     throw createHttpError(422, "This is a one-time project; choose advance, partial or final.");
 
@@ -101,7 +103,7 @@ export const confirmPayment = async (req, res) => {
   });
   if (!payment) throw createHttpError(409, "This payment was already updated.");
 
-  if (project.pricingType === "subscription" && project.subscription?.nextPaymentDate) {
+  if (project.pricingType === "subscription" && project.subscription?.nextPaymentDate && !project.subscription?.stoppedAt) {
     project.subscription.nextPaymentDate = addCycle(project.subscription.nextPaymentDate, project.subscription.frequency);
     await project.save();
   }

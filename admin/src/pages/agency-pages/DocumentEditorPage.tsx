@@ -15,7 +15,7 @@ import {
 import { Field, errMsg } from "@/components/agency/common";
 import { PreviewPanel } from "@/components/documents/PreviewPanel";
 import { printDocument } from "@/components/documents/DocumentSheet";
-import { calcTotals, formatINR, type BankDetails, idOf, KIND_LABEL, KIND_PATH, toInputDate, type DocKind, type LineItem, type Party } from "@/types/agency";
+import { calcTotals, formatINR, type BankDetails, idOf, KIND_LABEL, KIND_PATH, DOCUMENT_SERVICE_OPTIONS, toInputDate, type DocKind, type LineItem, type Party } from "@/types/agency";
 import type { ApiAxiosError } from "@/types/error";
 
 type Kind = "quotation" | "invoice";
@@ -93,6 +93,15 @@ export default function DocumentEditorPage() {
     setThankYou(kind === "invoice" ? b.invoiceThankYou : b.quotationThankYou);
     setTerms(kind === "invoice" ? b.invoiceTerms : b.quotationTerms);
   }, [settings.data, editing, kind, issueDate]);
+
+  // a NEW quotation for a subscription project gets the subscription terms (one-time projects keep the normal ones)
+  const termsFor = useRef("");
+  useEffect(() => {
+    const b = settings.data, p = project.data?.project;
+    if (editing || kind !== "quotation" || !b || !p || termsFor.current === projectId) return;
+    termsFor.current = projectId;
+    setTerms(p.pricingType === "subscription" ? (b.quotationSubscriptionTerms || b.quotationTerms) : b.quotationTerms);
+  }, [settings.data, project.data, editing, kind, projectId]);
 
   // load a saved document into the form
   useEffect(() => {
@@ -296,7 +305,7 @@ export default function DocumentEditorPage() {
               {items.map((it, i) => (
                 <div key={i} className="space-y-3 rounded-xl border border-neutral-200 p-4">
                   <div className="flex gap-2">
-                    <Input className={inp} placeholder="Service / item" value={it.title} onChange={(e) => setItem(i, { title: e.target.value })} />
+                    <Input className={inp} list="service-options" placeholder="Service / item" value={it.title} onChange={(e) => setItem(i, { title: e.target.value })} />
                     <Button type="button" size="icon" variant="ghost" className="h-12 w-12" disabled={items.length === 1} onClick={() => setItems((a) => a.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                   <Textarea rows={2} className="rounded-lg border-neutral-200 text-[15px] shadow-none" placeholder={"Short description (optional)\nStart a line with - for a bullet"} value={it.description} onChange={(e) => setItem(i, { description: e.target.value })} />
@@ -307,6 +316,7 @@ export default function DocumentEditorPage() {
                   </div>
                 </div>
               ))}
+              <datalist id="service-options">{DOCUMENT_SERVICE_OPTIONS.map((o) => <option key={o} value={o} />)}</datalist>
               <Button type="button" variant="outline" className="h-11 w-full rounded-lg border-dashed" onClick={() => setItems((a) => [...a, blankItem()])}><Plus className="h-4 w-4" /> Add another service</Button>
 
               <div className={kind === "invoice" ? "grid grid-cols-2 gap-4" : ""}>

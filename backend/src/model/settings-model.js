@@ -23,6 +23,7 @@ const settingsSchema = new Schema(
     invoiceThankYou: { type: String, default: "Thank you for the business!" },
     invoiceTerms: { type: String, default: "" },
     quotationThankYou: { type: String, default: "Thank you for considering Renoble!" },
+    quotationSubscriptionTerms: { type: String, default: "• Monthly recurring payment.\n• Minimum subscription period: 6 months.\n• Hosting and maintenance included throughout the subscription.\n• Payment is due at the beginning of each billing cycle." },
     quotationTerms: { type: String, default: "Payment: 50% advance to start work, remaining 50% on completion.\nIf any third-party service changes its price or policy, the extra cost is paid by the client." },
   },
   { timestamps: true }

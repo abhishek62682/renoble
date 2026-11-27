@@ -43,7 +43,7 @@ export interface Project {
   deadline: string | null;
   pricingType: PricingType;
   oneTime?: { totalPrice: number | null; advanceAmount: number };
-  subscription?: { amount: number | null; frequency: Frequency | null; startDate: string | null; nextPaymentDate: string | null };
+  subscription?: { amount: number | null; advanceAmount?: number; frequency: Frequency | null; startDate: string | null; nextPaymentDate: string | null; stoppedAt?: string | null };
   finance?: ProjectFinance;
   invoiceParts?: { advance?: string; remaining?: string }; // ids of the 50% / balance invoices already made
   createdAt: string;
@@ -162,9 +162,12 @@ export const docPath = (d: Pick<DocumentRecord, "_id" | "kind">) =>
 export const clientPath = (c: { _id: string; type?: ClientType }) => `/dashboard/clients/${c._id}`;
 
 export const SERVICE_OPTIONS = [
-  "Website Development", "App Development", "Logo & Branding", "UI/UX Design",
-  "E-commerce Store", "SEO & Marketing", "Social Media Design", "Maintenance & Hosting",
+  "Website Development", "Website Redesign", "App Development", "Custom Software",
+  "Logo & Branding", "Business Email Setup Cost (Optional)",
 ];
+
+/** Quotation/invoice line suggestions: the project services plus a few that are only billed, never a project. */
+export const DOCUMENT_SERVICE_OPTIONS = [...SERVICE_OPTIONS, "Domain", "Hosting"];
 
 /** Printed at the bottom of invoices. */
 export interface BankDetails { accountName: string; accountNumber: string; ifsc: string; branch: string; upi: string }
@@ -174,5 +177,5 @@ export interface BusinessSettings {
   bankAccountName: string; bankAccountNumber: string; bankIfsc: string; bankBranch: string; bankUpi: string;
   panelColor: string; accentColor: string;
   taxPercent: number; invoiceDueDays: number; quotationValidDays: number;
-  invoiceThankYou: string; invoiceTerms: string; quotationThankYou: string; quotationTerms: string;
+  invoiceThankYou: string; invoiceTerms: string; quotationThankYou: string; quotationTerms: string; quotationSubscriptionTerms: string;
 }

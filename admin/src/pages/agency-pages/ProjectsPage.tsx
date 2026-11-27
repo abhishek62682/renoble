@@ -86,7 +86,7 @@ export default function ProjectsPage() {
                     <>
                       <TableCell>
                         <div className="text-sm font-medium tabular-nums">{formatINR(p.finance?.agreed)}</div>
-                        <div className="text-xs text-muted-foreground">{p.pricingType === "one_time" ? "One-time" : `Subscription · ${p.subscription?.frequency}`}</div>
+                        <div className="text-xs text-muted-foreground">{p.pricingType === "one_time" ? "One-time" : p.subscription?.stoppedAt ? "Subscription · stopped" : `Subscription · ${p.subscription?.frequency}`}</div>
                       </TableCell>
                       <TableCell>
                         {p.pricingType === "one_time" && (

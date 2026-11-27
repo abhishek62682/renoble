@@ -28,9 +28,11 @@ const projectSchema = new Schema(
     },
     subscription: {
       amount: { type: Number, min: 0, default: null },
+      advanceAmount: { type: Number, min: 0, default: 0 }, // one cycle taken upfront to start the project
       frequency: { type: String, enum: ["monthly", "quarterly", "yearly"], default: null },
       startDate: { type: Date, default: null },
       nextPaymentDate: { type: Date, default: null },
+      stoppedAt: { type: Date, default: null }, // set when the client stops the subscription; no more cycles after this
     },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
   },

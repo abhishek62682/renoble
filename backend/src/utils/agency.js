@@ -86,8 +86,8 @@ export const financeTotals = async () => {
       pendingAmount += f.remaining;
     } else {
       const div = pr.subscription?.frequency === "yearly" ? 12 : pr.subscription?.frequency === "quarterly" ? 3 : 1;
-      recurringPerMonth += f.agreed / div;
-      pendingAmount += f.pendingRequested;
+      if (!pr.subscription?.stoppedAt) recurringPerMonth += f.agreed / div; // stopped subscriptions bring no more money
+      pendingAmount += f.pendingRequested; // but what was already requested is still owed
     }
   }
   const receivedAmount = payments.filter((p) => p.status === "received").reduce((s, p) => s + p.amount, 0);

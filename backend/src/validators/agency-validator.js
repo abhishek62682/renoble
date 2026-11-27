@@ -67,6 +67,7 @@ const projectBase = z.object({
   subscription: z
     .object({
       amount: z.coerce.number().min(0).nullable().optional(),
+      advanceAmount: z.coerce.number().min(0).optional().default(0),
       frequency: z.enum(["monthly", "quarterly", "yearly"]).nullable().optional(),
       startDate: date.optional(),
       nextPaymentDate: date.optional(),
@@ -94,6 +95,7 @@ const pricingCheck = (b, ctx) => {
 export const projectBody = projectBase.superRefine(pricingCheck);
 export const createProjectSchema = z.object({ body: projectBody });
 export const updateProjectSchema = z.object({ body: projectBody, params: id });
+export const subscriptionStopSchema = z.object({ body: z.object({ stopped: z.boolean() }), params: id });
 export const projectStatusSchema = z.object({
   body: z.object({
     status: z.enum(["awaiting_approval", "awaiting_payment", "ongoing", "on_hold", "completed", "cancelled"]),
@@ -229,5 +231,6 @@ export const settingsSchema = z.object({
     invoiceTerms: z.string().trim().max(500).default(""),
     quotationThankYou: z.string().trim().max(300).default(""),
     quotationTerms: z.string().trim().max(500).default(""),
+    quotationSubscriptionTerms: z.string().trim().max(500).optional(),
   }),
 });

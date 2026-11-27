@@ -32,7 +32,7 @@ export interface ProjectInput {
   startDate: string | null; deadline: string | null;
   pricingType: "one_time" | "subscription";
   oneTime?: { totalPrice: number; advanceAmount: number };
-  subscription?: { amount: number; frequency: string; startDate: string | null; nextPaymentDate: string | null };
+  subscription?: { amount: number; advanceAmount?: number; frequency: string; startDate: string | null; nextPaymentDate: string | null };
 }
 export const listProjects = (p: { status?: ProjectStatus; client?: string; page?: number; limit?: number }) => get<Project[]>("/projects", p);
 export const getProject = async (id: string) =>
@@ -40,6 +40,7 @@ export const getProject = async (id: string) =>
 export const createProject = async (b: ProjectInput) => (await send<Project>("post", "/projects", b)).data;
 export const updateProject = async (id: string, b: ProjectInput) => (await send<Project>("put", `/projects/${id}`, b)).data;
 export const setProjectStatus = async (id: string, status: ProjectStatus) => (await send<Project>("patch", `/projects/${id}/status`, { status })).data;
+export const setSubscriptionStopped = async (id: string, stopped: boolean) => (await send<Project>("patch", `/projects/${id}/subscription`, { stopped })).data;
 export const deleteProject = (id: string) => send("delete", `/projects/${id}`);
 
 // ── payments ───────────────────────────────────────────────────────────────

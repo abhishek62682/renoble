@@ -101,6 +101,7 @@ export default function SettingsPage() {
           <Field label="Invoice terms" className="sm:col-span-3"><Textarea rows={2} value={form.invoiceTerms} onChange={(e) => set("invoiceTerms", e.target.value)} /></Field>
           <Field label="Quotation closing note" className="sm:col-span-3"><Input value={form.quotationThankYou} onChange={(e) => set("quotationThankYou", e.target.value)} /></Field>
           <Field label="Quotation terms" className="sm:col-span-3"><Textarea rows={2} value={form.quotationTerms} onChange={(e) => set("quotationTerms", e.target.value)} /></Field>
+          <Field label="Quotation terms (subscription projects)" className="sm:col-span-3"><Textarea rows={4} value={form.quotationSubscriptionTerms ?? ""} onChange={(e) => set("quotationSubscriptionTerms", e.target.value)} /></Field>
         </CardContent>
       </Card>
 

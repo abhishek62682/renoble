@@ -20,14 +20,14 @@ type Form = {
   client: string; name: string; businessName: string; services: string[]; description: string; status: ProjectInput["status"];
   startDate: string; deadline: string; pricingType: PricingType;
   totalPrice: string; advanceAmount: string;
-  subAmount: string; frequency: string; subStart: string; nextPayment: string;
+  subAmount: string; subAdvance: string; frequency: string; subStart: string; nextPayment: string;
 };
 /** No typed project name: it is the business (or the client) plus the services, e.g. "Acme – Website Development". */
 const projectName = (who: string, services: string[]) => [who.trim(), services.join(", ")].filter(Boolean).join(" – ") || "Project";
 
 const EMPTY: Form = {
   client: "", name: "", businessName: "", services: [], description: "", status: "awaiting_approval", startDate: "", deadline: "", pricingType: "one_time",
-  totalPrice: "", advanceAmount: "", subAmount: "", frequency: "monthly", subStart: "", nextPayment: "",
+  totalPrice: "", advanceAmount: "", subAmount: "", subAdvance: "", frequency: "monthly", subStart: "", nextPayment: "",
 };
 
 export default function ProjectFormPage() {
@@ -55,7 +55,7 @@ export default function ProjectFormPage() {
       client: p.client._id, name: p.name, businessName: p.businessName ?? "", services: p.services ?? [], description: p.description, status: p.status,
       startDate: toInputDate(p.startDate), deadline: toInputDate(p.deadline), pricingType: p.pricingType,
       totalPrice: String(p.oneTime?.totalPrice ?? ""), advanceAmount: String(p.oneTime?.advanceAmount ?? ""),
-      subAmount: String(p.subscription?.amount ?? ""), frequency: p.subscription?.frequency ?? "monthly",
+      subAmount: String(p.subscription?.amount ?? ""), subAdvance: String(p.subscription?.advanceAmount ?? ""), frequency: p.subscription?.frequency ?? "monthly",
       subStart: toInputDate(p.subscription?.startDate), nextPayment: toInputDate(p.subscription?.nextPaymentDate),
     });
     setLoaded(true);
@@ -68,7 +68,7 @@ export default function ProjectFormPage() {
         startDate: form.startDate || null, deadline: form.deadline || null, pricingType: form.pricingType,
         ...(form.pricingType === "one_time"
           ? { oneTime: { totalPrice: Number(form.totalPrice), advanceAmount: Number(form.advanceAmount) || 0 } }
-          : { subscription: { amount: Number(form.subAmount), frequency: form.frequency, startDate: form.subStart || null, nextPaymentDate: form.nextPayment || null } }),
+          : { subscription: { amount: Number(form.subAmount), advanceAmount: Number(form.subAdvance) || 0, frequency: form.frequency, startDate: form.subStart || null, nextPaymentDate: form.nextPayment || null } }),
       };
       return editing ? updateProject(id!, body) : createProject(body);
     },
@@ -178,7 +178,12 @@ export default function ProjectFormPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Recurring amount (₹)" required error={errors["subscription.amount"]}>
-                <Input type="number" min={0} value={form.subAmount} onChange={(e) => set("subAmount", e.target.value)} />
+                <Input type="number" min={0} value={form.subAmount} onChange={(e) => {
+                  const v = e.target.value;
+                  // the advance follows the recurring amount (one cycle upfront) until it is changed by hand
+                  if (!form.subAdvance || form.subAdvance === form.subAmount) set("subAdvance", v);
+                  set("subAmount", v);
+                }} />
               </Field>
               <Field label="Billing frequency" required>
                 <Select value={form.frequency} onValueChange={(v) => set("frequency", v)}>
@@ -190,6 +195,10 @@ export default function ProjectFormPage() {
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Advance (₹)" hint="One billing cycle taken upfront to start the project.">
+                <Input type="number" min={0} value={form.subAdvance} onChange={(e) => set("subAdvance", e.target.value)} />
+              </Field>
+              <div className="hidden sm:block" />
               <Field label="Subscription start date" required error={errors["subscription.startDate"]}>
                 <Input type="date" value={form.subStart} onChange={(e) => set("subStart", e.target.value)} />
               </Field>

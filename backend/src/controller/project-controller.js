@@ -65,7 +65,9 @@ export const updateProject = async (req, res) => {
   // pricing option cannot be switched once money has been recorded against it
   if (req.body.pricingType !== project.pricingType && (await Payment.exists({ project: project._id, status: "received" })))
     throw createHttpError(409, "Pricing option can't be changed after a payment has been received.");
+  const stoppedAt = project.subscription?.stoppedAt ?? null; // editing the project never restarts a stopped subscription
   project.set(shapePricing(req.body));
+  if (project.pricingType === "subscription") project.subscription.stoppedAt = stoppedAt;
   await project.save();
   ok(res, project, "Project updated.");
 };
@@ -74,6 +76,16 @@ export const setProjectStatus = async (req, res) => {
   const project = await Project.findByIdAndUpdate(oid(req.params.id), { status: req.body.status }, { new: true });
   if (!project) throw createHttpError(404, "Project not found.");
   ok(res, project, "Status updated.");
+};
+
+/** Stop (or resume) a subscription. Stopped: no next payment, no new subscription requests, not counted as recurring. */
+export const setSubscriptionStopped = async (req, res) => {
+  const project = await Project.findById(oid(req.params.id));
+  if (!project) throw createHttpError(404, "Project not found.");
+  if (project.pricingType !== "subscription") throw createHttpError(422, "Only subscription projects can be stopped.");
+  project.subscription.stoppedAt = req.body.stopped ? new Date() : null;
+  await project.save();
+  ok(res, project, req.body.stopped ? "Subscription stopped." : "Subscription resumed.");
 };
 
 export const deleteProject = async (req, res) => {
@@ -89,7 +101,7 @@ export const deleteProject = async (req, res) => {
 /** Keep exactly one pricing option on the saved document. */
 function shapePricing(body) {
   const out = { ...body };
-  if (out.pricingType === "one_time") out.subscription = { amount: null, frequency: null, startDate: null, nextPaymentDate: null };
+  if (out.pricingType === "one_time") out.subscription = { amount: null, advanceAmount: 0, frequency: null, startDate: null, nextPaymentDate: null, stoppedAt: null };
   else out.oneTime = { totalPrice: null, advanceAmount: 0 };
   return out;
 }

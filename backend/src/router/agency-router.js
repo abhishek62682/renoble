@@ -39,6 +39,7 @@ router.get("/projects/:id", BOTH, projects.getProject);
 router.post("/projects", OWNER, validate(v.createProjectSchema), projects.createProject);
 router.put("/projects/:id", OWNER, validate(v.updateProjectSchema), projects.updateProject);
 router.patch("/projects/:id/status", OWNER, validate(v.projectStatusSchema), projects.setProjectStatus);
+router.patch("/projects/:id/subscription", OWNER, validate(v.subscriptionStopSchema), projects.setSubscriptionStopped);
 router.delete("/projects/:id", OWNER, projects.deleteProject);
 
 // Team (owner)

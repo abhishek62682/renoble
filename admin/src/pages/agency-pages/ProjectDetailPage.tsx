@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, FileText, Pencil, Receipt, Trash2 } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CirclePause, CirclePlay, FileText, Pencil, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { createReceipt, deleteProject, getProject, removePayment, setProjectStatus } from "@/config/api/agency.api";
+import { createReceipt, deleteProject, getProject, removePayment, setProjectStatus, setSubscriptionStopped } from "@/config/api/agency.api";
 import { ConfirmDialog, EmptyState, StatCard, StatusBadge, TextLink, errMsg } from "@/components/agency/common";
 import { ConfirmPaymentDialog, useRefreshMoney } from "@/components/agency/PaymentDialogs";
 import { TaskPanel } from "@/components/agency/TaskPanel";
@@ -27,6 +27,7 @@ export default function ProjectDetailPage() {
 
   const [confirming, setConfirming] = useState<Payment | null>(null);
   const [delOpen, setDelOpen] = useState(false);
+  const [stopOpen, setStopOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({ queryKey: ["project", id], queryFn: () => getProject(id) });
 
@@ -34,6 +35,11 @@ export default function ProjectDetailPage() {
     mutationFn: (s: ProjectStatus) => setProjectStatus(id, s),
     onSuccess: () => { refresh(); toast.success("Status updated"); },
     onError: (e) => toast.error(errMsg(e)),
+  });
+  const stopSub = useMutation({
+    mutationFn: (stopped: boolean) => setSubscriptionStopped(id, stopped),
+    onSuccess: (_, stopped) => { refresh(); setStopOpen(false); toast.success(stopped ? "Subscription stopped" : "Subscription resumed"); },
+    onError: (e) => { toast.error(errMsg(e)); setStopOpen(false); },
   });
   const del = useMutation({
     mutationFn: () => deleteProject(id),
@@ -79,6 +85,9 @@ export default function ProjectDetailPage() {
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>{Object.entries(PROJECT_STATUS_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
             </Select>
+            {p.pricingType === "subscription" && (p.subscription?.stoppedAt
+              ? <Button variant="outline" disabled={stopSub.isPending} onClick={() => stopSub.mutate(false)}><CirclePlay className="h-4 w-4" /> Resume subscription</Button>
+              : <Button variant="outline" className="text-red-600 hover:text-red-700" onClick={() => setStopOpen(true)}><CirclePause className="h-4 w-4" /> Stop subscription</Button>)}
             <Button variant="outline" onClick={() => navigate(`/dashboard/projects/${id}/edit`)}><Pencil className="h-4 w-4" /> Edit</Button>
             <Button variant="outline" size="icon" onClick={() => setDelOpen(true)}><Trash2 className="h-4 w-4" /></Button>
           </div>
@@ -97,7 +106,9 @@ export default function ProjectDetailPage() {
             <div className="rounded-xl border bg-card p-4 shadow-xs">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Payment status</p>
               <div className="mt-2"><StatusBadge value={f.paymentStatus} /></div>
-              {p.pricingType === "subscription" && <p className="mt-2 text-xs text-muted-foreground">Next payment {formatDate(p.subscription?.nextPaymentDate)}</p>}
+              {p.pricingType === "subscription" && (p.subscription?.stoppedAt
+                ? <p className="mt-2 text-xs font-medium text-red-600">Subscription stopped on {formatDate(p.subscription.stoppedAt)}</p>
+                : <p className="mt-2 text-xs text-muted-foreground">Next payment {formatDate(p.subscription?.nextPaymentDate)}</p>)}
             </div>
           </div>
         </>
@@ -183,6 +194,11 @@ export default function ProjectDetailPage() {
       </Tabs>
 
       <ConfirmPaymentDialog payment={confirming} onOpenChange={(o) => !o && setConfirming(null)} />
+      <ConfirmDialog
+        open={stopOpen} onOpenChange={setStopOpen} title="Stop this subscription?"
+        description="No new subscription payments can be requested and it stops counting as recurring income. Payments already requested stay as they are. You can resume it later."
+        confirmLabel="Stop subscription" onConfirm={() => stopSub.mutate(true)} pending={stopSub.isPending}
+      />
       <ConfirmDialog
         open={delOpen} onOpenChange={setDelOpen} pending={del.isPending} title={`Delete "${p.name}"?`}
         description="Its tasks, pending payment requests and documents are deleted too. Projects with received payments can't be deleted; mark them cancelled instead."
